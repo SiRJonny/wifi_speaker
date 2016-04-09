@@ -107,3 +107,5 @@ local.properties
 
 # Code Recommenders
 .recommenders/
+wifi_audio_app/MultiCast/
+wifi_audio_app/UniCast/
