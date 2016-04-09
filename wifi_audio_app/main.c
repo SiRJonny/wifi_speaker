@@ -305,7 +305,7 @@ int main()
     // Configure Audio Codec
     //     
     AudioCodecReset(AUDIO_CODEC_TI_3254, NULL);
-    AudioCodecConfig(AUDIO_CODEC_TI_3254, AUDIO_CODEC_16_BIT, 24000,
+    AudioCodecConfig(AUDIO_CODEC_TI_3254, AUDIO_CODEC_16_BIT, 16000,
                       AUDIO_CODEC_STEREO, AUDIO_CODEC_SPEAKER_ALL,
                       AUDIO_CODEC_MIC_ALL);
 
@@ -366,7 +366,7 @@ int main()
         ERR_PRINT(lRetVal);
         LOOP_FOREVER();
     }    
-    AudioCaptureRendererConfigure(AUDIO_CODEC_16_BIT, 24000, AUDIO_CODEC_STEREO, RecordPlay, 1);
+    AudioCaptureRendererConfigure(AUDIO_CODEC_16_BIT, 16000, AUDIO_CODEC_STEREO, RecordPlay, 1);
 
     //
     // Start Audio Tx/Rx
