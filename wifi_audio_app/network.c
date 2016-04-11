@@ -783,10 +783,11 @@ static int GetData(HTTPCli_Handle cli)
 
     while(1)
     {
+    	int buffersize = 0;
     	int iRetVal = 0;
     	int iBufferFilled = 0;
         iBufferFilled = GetBufferSize(pPlayBuffer);
-        if(iBufferFilled <= (32*PACKET_SIZE))
+        if(iBufferFilled <= (66*PACKET_SIZE))
         {
         	len = HTTPCli_readResponseBody(cli, (char *)g_buff, sizeof(g_buff) - 1, &moreFlag);
 			if(len < 0)
@@ -817,7 +818,10 @@ static int GetData(HTTPCli_Handle cli)
 					LOOP_FOREVER();
 				}
 			}
-			UART_PRINT("--%d\n\r",GetBufferSize(pPlayBuffer));
+			buffersize = GetBufferSize(pPlayBuffer);
+			if (buffersize < 10000){
+				UART_PRINT("--%d\n\r",buffersize);
+			}
 
 			bytesReceived +=len;
 
