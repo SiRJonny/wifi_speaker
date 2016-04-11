@@ -694,6 +694,8 @@ static int GetData(HTTPCli_Handle cli)
 {
     long          lRetVal = 0;
 
+    int content_length = 0;
+
     int id;
     int len=0;
     bool moreFlag = 0;
@@ -748,6 +750,7 @@ static int GetData(HTTPCli_Handle cli)
         if(id == 0)
         {
             UART_PRINT("Content length: %s\n\r", g_buff);
+            content_length = atoi((char*)g_buff);
         }
         else if(id == 1)
         {
@@ -825,9 +828,13 @@ static int GetData(HTTPCli_Handle cli)
 
 			bytesReceived +=len;
 
-			if ((len - 2) >= 0 && g_buff[len - 2] == '\r' && g_buff [len - 1] == '\n'){
+			if(bytesReceived >= content_length){
 				break;
 			}
+
+			/*if ((len - 2) >= 0 && g_buff[len - 2] == '\r' && g_buff [len - 1] == '\n'){
+				break;
+			}*/
 
 			if(!moreFlag)
 			{
