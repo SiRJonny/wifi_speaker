@@ -73,7 +73,7 @@
 
 #define CC3200_MDNS_NAME  "CC3200._audio._udp.local"
 
-#define PREFIX_BUFFER           "/441khz.wav"		//"/bye.wav"		//"/meee.wav" 		//"/graphics/folders/partimages/CC3200.jpg"
+#define PREFIX_BUFFER           "/96khz.wav"		//"/bye.wav"		//"/meee.wav" 		//"/graphics/folders/partimages/CC3200.jpg"
 #define HOST_NAME               "csmcs.uw.hu"		//"www.ti.com"
 #define HOST_PORT               (80)
 
@@ -830,7 +830,7 @@ static int GetData(HTTPCli_Handle cli)
 				break;
 			}
         }else{
-        	osi_Sleep(20);
+        	osi_Sleep(10);
         }
     }
 

@@ -73,7 +73,7 @@
 //*****************************************************************************
 #define UDMA_DSTSZ_32_SRCSZ_16          0x21000000
 #define mainQUEUE_SIZE                3
-#define PLAY_WATERMARK		30*1024
+#define PLAY_WATERMARK		20*1024
 
 //*****************************************************************************
 //                 GLOBAL VARIABLES -- Start

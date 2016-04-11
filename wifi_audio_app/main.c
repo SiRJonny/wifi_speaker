@@ -273,32 +273,14 @@ int main()
     }
 
     RecordPlay = I2S_MODE_RX_TX;
-    g_loopback = 1;
 
+	pPlayBuffer = CreateCircularBuffer(PLAY_BUFFER_SIZE);
+	if(pPlayBuffer == NULL)
+	{
+		UART_PRINT("Unable to Allocate Memory for Rx Buffer\n\r");
+		LOOP_FOREVER();
+	}
 
-    //
-    // Create RX and TX Buffer
-    //
-    if(RecordPlay == I2S_MODE_RX_TX)
-    {
-        pRecordBuffer = CreateCircularBuffer(RECORD_BUFFER_SIZE);
-        if(pRecordBuffer == NULL)
-        {
-            UART_PRINT("Unable to Allocate Memory for Tx Buffer\n\r");
-            LOOP_FOREVER();
-        }
-    }
-
-    /* Play */
-    if(RecordPlay & I2S_MODE_TX)
-    {
-        pPlayBuffer = CreateCircularBuffer(PLAY_BUFFER_SIZE);
-        if(pPlayBuffer == NULL)
-        {
-            UART_PRINT("Unable to Allocate Memory for Rx Buffer\n\r");
-            LOOP_FOREVER();
-        }
-    }
 
 
     //
@@ -318,17 +300,6 @@ int main()
     GPIO_IF_LedOff(MCU_RED_LED_GPIO);
     GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);    
 
-    //
-    // Configure PIN_01 for GPIOOutput
-    //
-    //MAP_PinTypeGPIO(PIN_01, PIN_MODE_0, false);
-    // MAP_GPIODirModeSet(GPIOA1_BASE, 0x4, GPIO_DIR_MODE_OUT);
-
-    //
-    // Configure PIN_02 for GPIOOutput
-    //
-    //MAP_PinTypeGPIO(PIN_02, PIN_MODE_0, false);
-    // MAP_GPIODirModeSet(GPIOA1_BASE, 0x8, GPIO_DIR_MODE_OUT);
 
 
     //Turning off Green,Orange LED after i2c writes completed - First Time
@@ -350,11 +321,6 @@ int main()
         UDMAChannelSelect(UDMA_CH5_I2S_TX, NULL);
         SetupPingPongDMATransferRx(pPlayBuffer);
     }
-    if(RecordPlay == I2S_MODE_RX_TX)
-    {
-        UDMAChannelSelect(UDMA_CH4_I2S_RX, NULL);
-        SetupPingPongDMATransferTx(pRecordBuffer);
-    }
 
     //
     // Setup the Audio In/Out
@@ -365,8 +331,8 @@ int main()
     {
         ERR_PRINT(lRetVal);
         LOOP_FOREVER();
-    }    
-    AudioCaptureRendererConfigure(AUDIO_CODEC_16_BIT, 44100, AUDIO_CODEC_STEREO, RecordPlay, 1);
+    }
+    AudioCaptureRendererConfigure(AUDIO_CODEC_16_BIT, 9600, AUDIO_CODEC_STEREO, RecordPlay, 1);
 
     //
     // Start Audio Tx/Rx
@@ -409,25 +375,25 @@ int main()
     //
     // Start the Microphone Task
     //       
-    lRetVal = osi_TaskCreate( Microphone,(signed char*)"MicroPhone", \
+    /*lRetVal = osi_TaskCreate( Microphone,(signed char*)"MicroPhone", \
                                OSI_STACK_SIZE, NULL,
                                1, &g_MicTask );
     if(lRetVal < 0)
     {
         ERR_PRINT(lRetVal);
         LOOP_FOREVER();
-    }
+    }*/
 
     //
     // Start the Speaker Task
     //
-    lRetVal = osi_TaskCreate( Speaker, (signed char*)"Speaker",OSI_STACK_SIZE, \
+    /*lRetVal = osi_TaskCreate( Speaker, (signed char*)"Speaker",OSI_STACK_SIZE, \
                                NULL, 1, &g_SpeakerTask );
     if(lRetVal < 0)
     {
         ERR_PRINT(lRetVal);
         LOOP_FOREVER();
-    }
+    }*/
 
     //
     // Start the task scheduler
