@@ -930,6 +930,23 @@ void Network( void *pvParameters )
     UART_PRINT("Connected to the AP: %s\r\n", SSID_NAME);
 
 
+    //Stop Internal HTTP Server
+        lRetVal = sl_NetAppStop(SL_NET_APP_HTTP_SERVER_ID);
+        if(lRetVal < 0)
+        {
+            ERR_PRINT(lRetVal);
+            LOOP_FOREVER();
+        }
+
+        //Start Internal HTTP Server
+        lRetVal = sl_NetAppStart(SL_NET_APP_HTTP_SERVER_ID);
+        if(lRetVal < 0)
+        {
+            ERR_PRINT(lRetVal);
+            LOOP_FOREVER();
+        }
+        UART_PRINT("HTTP server started\r\n");
+
     lRetVal = ServerFileDownload();
 
     if(lRetVal < 0)
