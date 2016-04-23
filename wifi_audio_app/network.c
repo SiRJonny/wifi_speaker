@@ -38,6 +38,7 @@
 
 #include <stdio.h>
 
+
 // Simplelink includes
 #include "simplelink.h"
 
@@ -129,6 +130,17 @@ extern unsigned long Token;
 
 extern tCircularBuffer *pPlayBuffer;
 extern tCircularBuffer *pRecordBuffer;
+
+int IP_last = 999;
+
+unsigned char POST_token[] = "__SL_P_UIP";
+unsigned char GET_token_IP[]  = "__SL_G_UIP";
+
+#define LED_STRING              "LED"
+#define LED1_STRING             "LED1_"
+#define LED2_STRING             ",LED2_"
+#define LED_ON_STRING           "ON"
+#define LED_OFF_STRING          "OFF"
 
 //*****************************************************************************
 //                 GLOBAL VARIABLES -- End
@@ -328,6 +340,8 @@ void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent)
             SL_IPV4_BYTE(pNetAppEvent->EventData.ipAcquiredV4.gateway,2),
             SL_IPV4_BYTE(pNetAppEvent->EventData.ipAcquiredV4.gateway,1),
             SL_IPV4_BYTE(pNetAppEvent->EventData.ipAcquiredV4.gateway,0));
+
+            IP_last = SL_IPV4_BYTE(pNetAppEvent->EventData.ipAcquiredV4.ip,0);
         }
         break;
 
@@ -343,19 +357,115 @@ void SimpleLinkNetAppEventHandler(SlNetAppEvent_t *pNetAppEvent)
 
 //*****************************************************************************
 //
-//! \brief This function handles HTTP server events
+//! This function gets triggered when HTTP Server receives Application
+//! defined GET and POST HTTP Tokens.
 //!
-//! \param[in]  pServerEvent - Contains the relevant event information
-//! \param[in]    pServerResponse - Should be filled by the user with the
-//!                                      relevant response information
+//! \param pHttpServerEvent Pointer indicating http server event
+//! \param pHttpServerResponse Pointer indicating http server response
 //!
 //! \return None
 //!
-//****************************************************************************
-void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pHttpEvent,
-                                  SlHttpServerResponse_t *pHttpResponse)
+//*****************************************************************************
+void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pSlHttpServerEvent,
+                               SlHttpServerResponse_t *pSlHttpServerResponse)
 {
-    // Unused in this application
+    unsigned char strLenVal = 0;
+
+    if(!pSlHttpServerEvent || !pSlHttpServerResponse)
+    {
+        return;
+    }
+
+    switch (pSlHttpServerEvent->Event)
+    {
+        case SL_NETAPP_HTTPGETTOKENVALUE_EVENT:
+        {
+          unsigned char status, *ptr;
+
+          ptr = pSlHttpServerResponse->ResponseData.token_value.data;
+          pSlHttpServerResponse->ResponseData.token_value.len = 0;
+          if(memcmp(pSlHttpServerEvent->EventData.httpTokenName.data, GET_token_IP,
+                    strlen((const char *)GET_token_IP)) == 0)
+          {
+
+            strLenVal = strlen("192.168.1.");
+            pSlHttpServerResponse->ResponseData.token_value.len += strLenVal;
+            memcpy(ptr, "192.168.1.", strLenVal);
+            ptr += strLenVal;
+            ltoa(IP_last,ptr);
+            strLenVal = 3;
+            pSlHttpServerResponse->ResponseData.token_value.len += strLenVal;
+            ptr += strLenVal;
+
+            /*status = GPIO_IF_LedStatus(MCU_GREEN_LED_GPIO);
+            strLenVal = strlen(LED2_STRING);
+            memcpy(ptr, LED2_STRING, strLenVal);
+            ptr += strLenVal;
+            pSlHttpServerResponse->ResponseData.token_value.len += strLenVal;
+            if(status & 0x01)
+            {
+              strLenVal = strlen(LED_ON_STRING);
+              memcpy(ptr, LED_ON_STRING, strLenVal);
+              ptr += strLenVal;
+              pSlHttpServerResponse->ResponseData.token_value.len += strLenVal;
+            }
+            else
+            {
+              strLenVal = strlen(LED_OFF_STRING);
+              memcpy(ptr, LED_OFF_STRING, strLenVal);
+              ptr += strLenVal;
+              pSlHttpServerResponse->ResponseData.token_value.len += strLenVal;
+            }*/
+            *ptr = '\0';
+          }
+
+        }
+        break;
+
+        case SL_NETAPP_HTTPPOSTTOKENVALUE_EVENT:
+        {
+          unsigned char led;
+          unsigned char *ptr = pSlHttpServerEvent->EventData.httpPostData.token_name.data;
+
+          if(memcmp(ptr, POST_token, strlen((const char *)POST_token)) == 0)
+          {
+            ptr = pSlHttpServerEvent->EventData.httpPostData.token_value.data;
+            strLenVal = strlen(LED_STRING);
+            if(memcmp(ptr, LED_STRING, strLenVal) != 0)
+              break;
+            ptr += strLenVal;
+            led = *ptr;
+            strLenVal = strlen(LED_ON_STRING);
+            ptr += strLenVal;
+            if(led == '1')
+            {
+              if(memcmp(ptr, LED_ON_STRING, strLenVal) == 0)
+              {
+                      GPIO_IF_LedOn(MCU_RED_LED_GPIO);
+              }
+              else
+              {
+                      GPIO_IF_LedOff(MCU_RED_LED_GPIO);
+              }
+            }
+            else if(led == '2')
+            {
+              if(memcmp(ptr, LED_ON_STRING, strLenVal) == 0)
+              {
+                      GPIO_IF_LedOn(MCU_GREEN_LED_GPIO);
+              }
+              else
+              {
+                      GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
+              }
+            }
+
+          }
+        }
+          break;
+        default:
+          break;
+    }
 }
 
 //*****************************************************************************
@@ -915,6 +1025,7 @@ static long ServerFileDownload()
 void Network( void *pvParameters )
 {
     long lRetVal = -1;
+
     
     //Initialize Global Variable
     InitializeAppVariables();
@@ -945,7 +1056,16 @@ void Network( void *pvParameters )
             ERR_PRINT(lRetVal);
             LOOP_FOREVER();
         }
-        UART_PRINT("HTTP server started\r\n");
+
+        uint16_t httpPort;
+        unsigned char length = sizeof(httpPort);
+
+        lRetVal = sl_NetAppGet(SL_NET_APP_HTTP_SERVER_ID,NETAPP_SET_GET_HTTP_OPT_PORT_NUMBER, &length, (unsigned char *) &httpPort);
+
+        UART_PRINT("HTTP server started, port: %d\n\r", httpPort);
+
+
+
 
     lRetVal = ServerFileDownload();
 
