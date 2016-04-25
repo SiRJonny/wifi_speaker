@@ -142,7 +142,12 @@ unsigned char GET_token_IP[]  = "__SL_G_UIP";
 #define LED_ON_STRING           "ON"
 #define LED_OFF_STRING          "OFF"
 
-char UDP_notify[] = "NOTIFY * HTTP/1.1\n\rHOST: 239.255.255.250:1900\n\rCACHE-CONTROL: max-age=80\n\rLOCATION: http://192.168.1.103:80/description.xml\n\rNT: upnp:rootdevice\n\rNTS: ssdp:alive\n\rSERVER: CC3200, UPnP/1.0\n\rUSN: uuid:c03107e0-08f4-11e6-a837-0800200c9a66::upnp:rootdevice\n\r\n\r";
+char UDP_notify1[] = "NOTIFY * HTTP/1.1\n\rHOST: 239.255.255.250:1900\n\rCACHE-CONTROL: max-age=80\n\rLOCATION: http://192.168.1.103:80/description.xml\n\rNT: upnp:rootdevice\n\rNTS: ssdp:alive\n\rSERVER: FreeRTOS/1.0, UPnP/1.0, CC3200/0.1\n\rUSN: uuid:c03107e0-08f4-11e6-a837-0800200c9a66::upnp:rootdevice\n\r\n\r";
+char UDP_notify2[] = "NOTIFY * HTTP/1.1\n\rHOST: 239.255.255.250:1900\n\rCACHE-CONTROL: max-age=80\n\rLOCATION: http://192.168.1.103:80/description.xml\n\rNT: urn:schemas-upnp-org:device:MediaRenderer:1\n\rNTS: ssdp:alive\n\rSERVER: FreeRTOS/1.0, UPnP/1.0, CC3200/0.1\n\rUSN: uuid:c03107e0-08f4-11e6-a837-0800200c9a66::urn:schemas-upnp-org:device:MediaRenderer:1\n\r\n\r";
+char UDP_notify3[] = "NOTIFY * HTTP/1.1\n\rHOST: 239.255.255.250:1900\n\rCACHE-CONTROL: max-age=80\n\rLOCATION: http://192.168.1.103:80/description.xml\n\rNT: uuid:c03107e0-08f4-11e6-a837-0800200c9a66\n\rNTS: ssdp:alive\n\rSERVER: FreeRTOS/1.0, UPnP/1.0, CC3200/0.1\n\rUSN: uuid:c03107e0-08f4-11e6-a837-0800200c9a66\n\r\n\r";
+char UDP_notify4[] = "NOTIFY * HTTP/1.1\n\rHOST: 239.255.255.250:1900\n\rCACHE-CONTROL: max-age=80\n\rLOCATION: http://192.168.1.103:80/description.xml\n\rNT: urn:schemas-upnp-org:service:AVTransport:1\n\rNTS: ssdp:alive\n\rSERVER: FreeRTOS/1.0, UPnP/1.0, CC3200/0.1\n\rUSN: uuid:c03107e0-08f4-11e6-a837-0800200c9a66::urn:schemas-upnp-org:service:AVTransport:1\n\r\n\r";
+char UDP_notify5[] = "NOTIFY * HTTP/1.1\n\rHOST: 239.255.255.250:1900\n\rCACHE-CONTROL: max-age=80\n\rLOCATION: http://192.168.1.103:80/description.xml\n\rNT: urn:schemas-upnp-org:service:ConnectionManager:1\n\rNTS: ssdp:alive\n\rSERVER: FreeRTOS/1.0, UPnP/1.0, CC3200/0.1\n\rUSN: uuid:c03107e0-08f4-11e6-a837-0800200c9a66::urn:schemas-upnp-org:service:ConnectionManager:1\n\r\n\r";
+char UDP_notify6[] = "NOTIFY * HTTP/1.1\n\rHOST: 239.255.255.250:1900\n\rCACHE-CONTROL: max-age=80\n\rLOCATION: http://192.168.1.103:80/description.xml\n\rNT: urn:schemas-upnp-org:service:RenderingControl:1\n\rNTS: ssdp:alive\n\rSERVER: FreeRTOS/1.0, UPnP/1.0, CC3200/0.1\n\rUSN: uuid:c03107e0-08f4-11e6-a837-0800200c9a66::urn:schemas-upnp-org:service:RenderingControl:1\n\r\n\r";
 
 //*****************************************************************************
 //                 GLOBAL VARIABLES -- End
@@ -1052,7 +1057,7 @@ void Network( void *pvParameters )
     SlSockAddrIn_t  sAddr;
     int             iSockID;
     unsigned long   lLoopCount = 0;
-    short           sTestBufLen = 275;
+    short           sTestBufLen0;
     int             iAddrSize;
     int             iStatus;
 
@@ -1073,12 +1078,15 @@ void Network( void *pvParameters )
     	LOOP_FOREVER();
     }
 
+    while(1){
     // for a UDP connection connect is not required
     // sending 10 packets to the UDP server
-    while (lLoopCount < 10)
+    while (lLoopCount < 2)
     {
+
+
         // sending packet
-        iStatus = sl_SendTo(iSockID, UDP_notify, sTestBufLen, 0,
+        iStatus = sl_SendTo(iSockID, UDP_notify1, sizeof(UDP_notify1), 0,
                                 (SlSockAddr_t *)&sAddr, iAddrSize);
 
         if( iStatus <= 0 )
@@ -1089,10 +1097,81 @@ void Network( void *pvParameters )
         	UART_PRINT("ERROR: UDP socket send failed\n\r");
         	LOOP_FOREVER();
         }
-        UART_PRINT("UDP socket send 1\n\r");
+
+        // sending packet
+	   iStatus = sl_SendTo(iSockID, UDP_notify2, sizeof(UDP_notify2), 0,
+							   (SlSockAddr_t *)&sAddr, iAddrSize);
+
+	   if( iStatus <= 0 )
+	   {
+		   // error
+		   sl_Close(iSockID);
+		   //ASSERT_ON_ERROR(UDP_CLIENT_FAILED);
+		UART_PRINT("ERROR: UDP socket send failed\n\r");
+		LOOP_FOREVER();
+	   }
+
+	   // sending packet
+	   iStatus = sl_SendTo(iSockID, UDP_notify3, sizeof(UDP_notify3), 0,
+							   (SlSockAddr_t *)&sAddr, iAddrSize);
+
+	   if( iStatus <= 0 )
+	   {
+		   // error
+		   sl_Close(iSockID);
+		   //ASSERT_ON_ERROR(UDP_CLIENT_FAILED);
+		UART_PRINT("ERROR: UDP socket send failed\n\r");
+		LOOP_FOREVER();
+	   }
+
+	   // sending packet
+	   iStatus = sl_SendTo(iSockID, UDP_notify4, sizeof(UDP_notify4), 0,
+							   (SlSockAddr_t *)&sAddr, iAddrSize);
+
+	   if( iStatus <= 0 )
+	   {
+		   // error
+		   sl_Close(iSockID);
+		   //ASSERT_ON_ERROR(UDP_CLIENT_FAILED);
+		UART_PRINT("ERROR: UDP socket send failed\n\r");
+		LOOP_FOREVER();
+	   }
+
+	   // sending packet
+	   iStatus = sl_SendTo(iSockID, UDP_notify5, sizeof(UDP_notify5), 0,
+							   (SlSockAddr_t *)&sAddr, iAddrSize);
+
+	   if( iStatus <= 0 )
+	   {
+		   // error
+		   sl_Close(iSockID);
+		   //ASSERT_ON_ERROR(UDP_CLIENT_FAILED);
+		UART_PRINT("ERROR: UDP socket send failed\n\r");
+		LOOP_FOREVER();
+	   }
+
+	   // sending packet
+	   iStatus = sl_SendTo(iSockID, UDP_notify6, sizeof(UDP_notify6), 0,
+							   (SlSockAddr_t *)&sAddr, iAddrSize);
+
+	   if( iStatus <= 0 )
+	   {
+		   // error
+		   sl_Close(iSockID);
+		   //ASSERT_ON_ERROR(UDP_CLIENT_FAILED);
+		UART_PRINT("ERROR: UDP socket send failed\n\r");
+		LOOP_FOREVER();
+	   }
+        UART_PRINT("UDP socket send %d\n\r", lLoopCount);
+
         lLoopCount++;
     }
     UART_PRINT("UDP packets sent..\n\r");
+
+    lLoopCount = 0;
+    osi_Sleep(15000);
+    }
+
 
     lRetVal = ServerFileDownload();
 
