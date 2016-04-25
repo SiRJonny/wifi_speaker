@@ -1001,6 +1001,39 @@ static long ServerFileDownload()
 	    return SUCCESS;
 
 }
+
+static long StartHttpServer(){
+	long lRetVal;
+
+	//Stop Internal HTTP Server
+	lRetVal = sl_NetAppStop(SL_NET_APP_HTTP_SERVER_ID);
+	if(lRetVal < 0)
+	{
+		return lRetVal;
+	}
+
+	//Start Internal HTTP Server
+	lRetVal = sl_NetAppStart(SL_NET_APP_HTTP_SERVER_ID);
+	if(lRetVal < 0)
+	{
+		return lRetVal;
+	}
+
+	uint16_t httpPort;
+	unsigned char length = sizeof(httpPort);
+
+	lRetVal = sl_NetAppGet(SL_NET_APP_HTTP_SERVER_ID,NETAPP_SET_GET_HTTP_OPT_PORT_NUMBER, &length, (unsigned char *) &httpPort);
+	if(lRetVal < 0)
+	{
+		UART_PRINT("HTTP server get port failed\n\r");
+		return lRetVal;
+	}
+
+	UART_PRINT("HTTP server started, port: %d\n\r", httpPort);
+	return lRetVal;
+}
+
+
 //*****************************************************************************
 //
 //! Network Task
@@ -1028,36 +1061,21 @@ void Network( void *pvParameters )
     
     UART_PRINT("Connected to the AP: %s\r\n", SSID_NAME);
 
-
-    ////////Stop Internal HTTP Server
-	lRetVal = sl_NetAppStop(SL_NET_APP_HTTP_SERVER_ID);
-	if(lRetVal < 0)
+    lRetVal = StartHttpServer();
+    if(lRetVal < 0)
 	{
+    	UART_PRINT("ERROR: HTTP server start failed\n\r");
 		ERR_PRINT(lRetVal);
 		LOOP_FOREVER();
 	}
 
-	//Start Internal HTTP Server
-	lRetVal = sl_NetAppStart(SL_NET_APP_HTTP_SERVER_ID);
-	if(lRetVal < 0)
-	{
-		ERR_PRINT(lRetVal);
-		LOOP_FOREVER();
-	}
 
-	uint16_t httpPort;
-	unsigned char length = sizeof(httpPort);
-
-	lRetVal = sl_NetAppGet(SL_NET_APP_HTTP_SERVER_ID,NETAPP_SET_GET_HTTP_OPT_PORT_NUMBER, &length, (unsigned char *) &httpPort);
-
-	UART_PRINT("HTTP server started, port: %d\n\r", httpPort);
 
 
 	//////create UDP client socket for multicast
     SlSockAddrIn_t  sAddr;
     int             iSockID;
     unsigned long   lLoopCount = 0;
-    short           sTestBufLen0;
     int             iAddrSize;
     int             iStatus;
 
