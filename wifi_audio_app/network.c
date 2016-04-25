@@ -74,7 +74,7 @@
 
 #define CC3200_MDNS_NAME  "CC3200._audio._udp.local"
 
-#define PREFIX_BUFFER           "/96khz.wav"		//"/bye.wav"		//"/meee.wav" 		//"/graphics/folders/partimages/CC3200.jpg"
+#define PREFIX_BUFFER           "/441khz.wav"		//"/bye.wav"		//"/meee.wav" 		//"/graphics/folders/partimages/CC3200.jpg"
 #define HOST_NAME               "csmcs.uw.hu"		//"www.ti.com"
 #define HOST_PORT               (80)
 
@@ -141,6 +141,8 @@ unsigned char GET_token_IP[]  = "__SL_G_UIP";
 #define LED2_STRING             ",LED2_"
 #define LED_ON_STRING           "ON"
 #define LED_OFF_STRING          "OFF"
+
+char UDP_notify[] = "NOTIFY * HTTP/1.1/n/rHOST: 239.255.255.250:1900/n/rCACHE-CONTROL: max-age=80/n/rLOCATION: http://192.168.1.103:80/description.xml/n/rNT: upnp:rootdevice/n/rNTS: ssdp:alive/n/rSERVER: CC3200, UPnP/1.0/n/rUSN: uuid:c03107e0-08f4-11e6-a837-0800200c9a66::upnp:rootdevice/n/r/n/r";
 
 //*****************************************************************************
 //                 GLOBAL VARIABLES -- End
@@ -380,7 +382,7 @@ void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pSlHttpServerEvent,
     {
         case SL_NETAPP_HTTPGETTOKENVALUE_EVENT:
         {
-          unsigned char status, *ptr;
+          unsigned char *ptr;
 
           ptr = pSlHttpServerResponse->ResponseData.token_value.data;
           pSlHttpServerResponse->ResponseData.token_value.len = 0;
@@ -397,25 +399,6 @@ void SimpleLinkHttpServerCallback(SlHttpServerEvent_t *pSlHttpServerEvent,
             pSlHttpServerResponse->ResponseData.token_value.len += strLenVal;
             ptr += strLenVal;
 
-            /*status = GPIO_IF_LedStatus(MCU_GREEN_LED_GPIO);
-            strLenVal = strlen(LED2_STRING);
-            memcpy(ptr, LED2_STRING, strLenVal);
-            ptr += strLenVal;
-            pSlHttpServerResponse->ResponseData.token_value.len += strLenVal;
-            if(status & 0x01)
-            {
-              strLenVal = strlen(LED_ON_STRING);
-              memcpy(ptr, LED_ON_STRING, strLenVal);
-              ptr += strLenVal;
-              pSlHttpServerResponse->ResponseData.token_value.len += strLenVal;
-            }
-            else
-            {
-              strLenVal = strlen(LED_OFF_STRING);
-              memcpy(ptr, LED_OFF_STRING, strLenVal);
-              ptr += strLenVal;
-              pSlHttpServerResponse->ResponseData.token_value.len += strLenVal;
-            }*/
             *ptr = '\0';
           }
 
@@ -1041,31 +1024,75 @@ void Network( void *pvParameters )
     UART_PRINT("Connected to the AP: %s\r\n", SSID_NAME);
 
 
-    //Stop Internal HTTP Server
-        lRetVal = sl_NetAppStop(SL_NET_APP_HTTP_SERVER_ID);
-        if(lRetVal < 0)
+    ////////Stop Internal HTTP Server
+	lRetVal = sl_NetAppStop(SL_NET_APP_HTTP_SERVER_ID);
+	if(lRetVal < 0)
+	{
+		ERR_PRINT(lRetVal);
+		LOOP_FOREVER();
+	}
+
+	//Start Internal HTTP Server
+	lRetVal = sl_NetAppStart(SL_NET_APP_HTTP_SERVER_ID);
+	if(lRetVal < 0)
+	{
+		ERR_PRINT(lRetVal);
+		LOOP_FOREVER();
+	}
+
+	uint16_t httpPort;
+	unsigned char length = sizeof(httpPort);
+
+	lRetVal = sl_NetAppGet(SL_NET_APP_HTTP_SERVER_ID,NETAPP_SET_GET_HTTP_OPT_PORT_NUMBER, &length, (unsigned char *) &httpPort);
+
+	UART_PRINT("HTTP server started, port: %d\n\r", httpPort);
+
+
+	//////create UDP client socket for multicast
+    SlSockAddrIn_t  sAddr;
+    int             iSockID;
+    unsigned long   lLoopCount = 0;
+    short           sTestBufLen;
+    int             iAddrSize;
+    int             iStatus;
+
+    //filling the UDP server socket address
+	sAddr.sin_family = SL_AF_INET;
+	sAddr.sin_port = sl_Htons((unsigned short)1900);
+	sAddr.sin_addr.s_addr = sl_Htonl((unsigned int)0xEFFFFFFA);
+
+    iAddrSize = sizeof(SlSockAddrIn_t);
+
+    // creating a UDP socket
+    iSockID = sl_Socket(SL_AF_INET,SL_SOCK_DGRAM, 0);
+    if( iSockID < 0 )
+    {
+        // error
+        //ASSERT_ON_ERROR(SOCKET_CREATE_ERROR);
+    	UART_PRINT("ERROR: UDP socket create failed\n\r");
+    	LOOP_FOREVER();
+    }
+
+    // for a UDP connection connect is not required
+    // sending 10 packets to the UDP server
+    while (lLoopCount < 10)
+    {
+        // sending packet
+        iStatus = sl_SendTo(iSockID, UDP_notify, sTestBufLen, 0,
+                                (SlSockAddr_t *)&sAddr, iAddrSize);
+
+        if( iStatus <= 0 )
         {
-            ERR_PRINT(lRetVal);
-            LOOP_FOREVER();
+            // error
+            sl_Close(iSockID);
+            //ASSERT_ON_ERROR(UDP_CLIENT_FAILED);
+        	UART_PRINT("ERROR: UDP socket send failed\n\r");
+        	LOOP_FOREVER();
         }
-
-        //Start Internal HTTP Server
-        lRetVal = sl_NetAppStart(SL_NET_APP_HTTP_SERVER_ID);
-        if(lRetVal < 0)
-        {
-            ERR_PRINT(lRetVal);
-            LOOP_FOREVER();
-        }
-
-        uint16_t httpPort;
-        unsigned char length = sizeof(httpPort);
-
-        lRetVal = sl_NetAppGet(SL_NET_APP_HTTP_SERVER_ID,NETAPP_SET_GET_HTTP_OPT_PORT_NUMBER, &length, (unsigned char *) &httpPort);
-
-        UART_PRINT("HTTP server started, port: %d\n\r", httpPort);
-
-
-
+        UART_PRINT("UDP socket send 1\n\r");
+        lLoopCount++;
+    }
+    UART_PRINT("UDP packets sent..\n\r");
 
     lRetVal = ServerFileDownload();
 
