@@ -142,7 +142,7 @@ unsigned char GET_token_IP[]  = "__SL_G_UIP";
 #define LED_ON_STRING           "ON"
 #define LED_OFF_STRING          "OFF"
 
-char UDP_notify[] = "NOTIFY * HTTP/1.1/n/rHOST: 239.255.255.250:1900/n/rCACHE-CONTROL: max-age=80/n/rLOCATION: http://192.168.1.103:80/description.xml/n/rNT: upnp:rootdevice/n/rNTS: ssdp:alive/n/rSERVER: CC3200, UPnP/1.0/n/rUSN: uuid:c03107e0-08f4-11e6-a837-0800200c9a66::upnp:rootdevice/n/r/n/r";
+char UDP_notify[] = "NOTIFY * HTTP/1.1\n\rHOST: 239.255.255.250:1900\n\rCACHE-CONTROL: max-age=80\n\rLOCATION: http://192.168.1.103:80/description.xml\n\rNT: upnp:rootdevice\n\rNTS: ssdp:alive\n\rSERVER: CC3200, UPnP/1.0\n\rUSN: uuid:c03107e0-08f4-11e6-a837-0800200c9a66::upnp:rootdevice\n\r\n\r";
 
 //*****************************************************************************
 //                 GLOBAL VARIABLES -- End
@@ -1052,7 +1052,7 @@ void Network( void *pvParameters )
     SlSockAddrIn_t  sAddr;
     int             iSockID;
     unsigned long   lLoopCount = 0;
-    short           sTestBufLen;
+    short           sTestBufLen = 275;
     int             iAddrSize;
     int             iStatus;
 

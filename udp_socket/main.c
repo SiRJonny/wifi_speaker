@@ -89,7 +89,7 @@
 #define IP_ADDR            0xc0a80064 /* 192.168.0.100 */
 #define PORT_NUM           5001
 #define BUF_SIZE           1400
-#define UDP_PACKET_COUNT   1000
+#define UDP_PACKET_COUNT   10
 
 // Application specific status/error codes
 typedef enum{
@@ -829,7 +829,7 @@ int BsdUdpClient(unsigned short usPort)
     //filling the UDP server socket address
     sAddr.sin_family = SL_AF_INET;
     sAddr.sin_port = sl_Htons((unsigned short)usPort);
-    sAddr.sin_addr.s_addr = sl_Htonl((unsigned int)g_ulDestinationIp);
+    sAddr.sin_addr.s_addr = sl_Htonl((unsigned int)0xEFFFFFFA);
 
     iAddrSize = sizeof(SlSockAddrIn_t);
 
