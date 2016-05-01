@@ -86,6 +86,12 @@
 // File on the serial flash to be replaced
 #define FILE_NAME               "cc3200.jpg"
 
+
+#define IP_ADDR             0xc0a80064 /* 192.168.0.100 */
+#define PORT_NUM            80
+#define BUF_SIZE            1400
+#define TCP_PACKET_COUNT    10
+
 // Application specific status/error codes
 typedef enum{
     // Choosing -0x7D0 to avoid overlap w/ host-driver's error codes
@@ -105,7 +111,14 @@ typedef enum{
 	INVALID_FILE = FILE_WRITE_ERROR - 1,
 	SERVER_CONNECTION_FAILED = INVALID_FILE - 1,
 	GET_HOST_IP_FAILED = SERVER_CONNECTION_FAILED  - 1,
-
+	SOCKET_CREATE_ERROR = GET_HOST_IP_FAILED - 1,
+	BIND_ERROR = SOCKET_CREATE_ERROR - 1,
+	LISTEN_ERROR = BIND_ERROR -1,
+	SOCKET_OPT_ERROR = LISTEN_ERROR -1,
+	CONNECT_ERROR = SOCKET_OPT_ERROR -1,
+	ACCEPT_ERROR = CONNECT_ERROR - 1,
+	SEND_ERROR = ACCEPT_ERROR -1,
+    RECV_ERROR = SEND_ERROR -1,
     STATUS_CODE_MAX = -0xBB8
 }e_AppStatusCodes;
 
@@ -119,6 +132,8 @@ volatile unsigned long  g_ulStatus = 0;//SimpleLink Status
 unsigned long  g_uiIpAddress = 0; //Device IP address
 unsigned char  g_ucConnectionSSID[SSID_LEN_MAX+1]; //Connection SSID
 unsigned char  g_ucConnectionBSSID[BSSID_LEN_MAX]; //Connection BSSID
+
+volatile unsigned long  g_ulPacketCount = TCP_PACKET_COUNT;
 
 unsigned long  g_ulDestinationIP; // IP address of destination server
 unsigned long  g_ulGatewayIP = 0; //Network Gateway IP address
@@ -148,6 +163,10 @@ char UDP_notify3[] = "NOTIFY * HTTP/1.1\nHOST: 239.255.255.250:1900\nCACHE-CONTR
 char UDP_notify4[] = "NOTIFY * HTTP/1.1\nHOST: 239.255.255.250:1900\nCACHE-CONTROL: max-age=80\nLOCATION: http://192.168.1.103:80/upnp/description.xml\nNT: urn:schemas-upnp-org:service:AVTransport:1\nNTS: ssdp:alive\nSERVER: FreeRTOS/1.0, UPnP/1.0, CC3200/0.1\nUSN: uuid:c03107e0-08f4-11e6-a837-0800200c9a66::urn:schemas-upnp-org:service:AVTransport:1\n\n";
 char UDP_notify5[] = "NOTIFY * HTTP/1.1\nHOST: 239.255.255.250:1900\nCACHE-CONTROL: max-age=80\nLOCATION: http://192.168.1.103:80/upnp/description.xml\nNT: urn:schemas-upnp-org:service:ConnectionManager:1\nNTS: ssdp:alive\nSERVER: FreeRTOS/1.0, UPnP/1.0, CC3200/0.1\nUSN: uuid:c03107e0-08f4-11e6-a837-0800200c9a66::urn:schemas-upnp-org:service:ConnectionManager:1\n\n";
 char UDP_notify6[] = "NOTIFY * HTTP/1.1\nHOST: 239.255.255.250:1900\nCACHE-CONTROL: max-age=80\nLOCATION: http://192.168.1.103:80/upnp/description.xml\nNT: urn:schemas-upnp-org:service:RenderingControl:1\nNTS: ssdp:alive\nSERVER: FreeRTOS/1.0, UPnP/1.0, CC3200/0.1\nUSN: uuid:c03107e0-08f4-11e6-a837-0800200c9a66::urn:schemas-upnp-org:service:RenderingControl:1\n\n";
+
+// tcp socket:
+char g_cBsdBuf[BUF_SIZE];
+
 
 //*****************************************************************************
 //                 GLOBAL VARIABLES -- End
@@ -1033,6 +1052,21 @@ static long StartHttpServer(){
 	return lRetVal;
 }
 
+static long StopHttpServer(){
+	long lRetVal;
+
+	//Stop Internal HTTP Server
+	lRetVal = sl_NetAppStop(SL_NET_APP_HTTP_SERVER_ID);
+	if(lRetVal < 0)
+	{
+		UART_PRINT("ERROR: stopping HTTP server\n\r");
+		return lRetVal;
+	}
+
+	UART_PRINT("HTTP server stopped\n\r");
+	return lRetVal;
+}
+
 
 void SendUDPNotify(){
 	//////create UDP client socket for multicast
@@ -1152,6 +1186,136 @@ void SendUDPNotify(){
 	lLoopCount = 0;
 }
 
+//****************************************************************************
+//
+//! \brief Opening a TCP server side socket and receiving data
+//!
+//! This function opens a TCP socket in Listen mode and waits for an incoming
+//!    TCP connection.
+//! If a socket connection is established then the function will try to read
+//!    1000 TCP packets from the connected client.
+//!
+//! \param[in] port number on which the server will be listening on
+//!
+//! \return     0 on success, -1 on error.
+//!
+//! \note   This function will wait for an incoming connection till
+//!                     one is established
+//
+//****************************************************************************
+int BsdTcpServer(unsigned short usPort)
+{
+    SlSockAddrIn_t  sAddr;
+    SlSockAddrIn_t  sLocalAddr;
+    int             iCounter;
+    int             iAddrSize;
+    int             iSockID;
+    int             iStatus;
+    int             iNewSockID;
+    long            lLoopCount = 0;
+    long            lNonBlocking = 1;
+    int             iTestBufLen;
+
+    // filling the buffer
+    for (iCounter=0 ; iCounter<BUF_SIZE ; iCounter++)
+    {
+        g_cBsdBuf[iCounter] = (char)(iCounter % 10);
+    }
+
+    iTestBufLen  = BUF_SIZE;
+
+    //filling the TCP server socket address
+    sLocalAddr.sin_family = SL_AF_INET;
+    sLocalAddr.sin_port = sl_Htons((unsigned short)usPort);
+    sLocalAddr.sin_addr.s_addr = 0;
+
+    // creating a TCP socket
+    iSockID = sl_Socket(SL_AF_INET,SL_SOCK_STREAM, 0);
+    if( iSockID < 0 )
+    {
+        // error
+        ASSERT_ON_ERROR(SOCKET_CREATE_ERROR);
+    }
+
+    iAddrSize = sizeof(SlSockAddrIn_t);
+
+    // binding the TCP socket to the TCP server address
+    iStatus = sl_Bind(iSockID, (SlSockAddr_t *)&sLocalAddr, iAddrSize);
+    if( iStatus < 0 )
+    {
+        // error
+        sl_Close(iSockID);
+        ASSERT_ON_ERROR(BIND_ERROR);
+    }
+
+    // putting the socket for listening to the incoming TCP connection
+    iStatus = sl_Listen(iSockID, 0);
+    if( iStatus < 0 )
+    {
+        sl_Close(iSockID);
+        ASSERT_ON_ERROR(LISTEN_ERROR);
+    }
+
+    // setting socket option to make the socket as non blocking
+    iStatus = sl_SetSockOpt(iSockID, SL_SOL_SOCKET, SL_SO_NONBLOCKING,
+                            &lNonBlocking, sizeof(lNonBlocking));
+    if( iStatus < 0 )
+    {
+        sl_Close(iSockID);
+        ASSERT_ON_ERROR(SOCKET_OPT_ERROR);
+    }
+    iNewSockID = SL_EAGAIN;
+
+    // waiting for an incoming TCP connection
+    while( iNewSockID < 0 )
+    {
+        // accepts a connection form a TCP client, if there is any
+        // otherwise returns SL_EAGAIN
+        iNewSockID = sl_Accept(iSockID, ( struct SlSockAddr_t *)&sAddr,
+                                (SlSocklen_t*)&iAddrSize);
+        if( iNewSockID == SL_EAGAIN )
+        {
+           MAP_UtilsDelay(10000);
+        }
+        else if( iNewSockID < 0 )
+        {
+            // error
+            sl_Close(iNewSockID);
+            sl_Close(iSockID);
+            ASSERT_ON_ERROR(ACCEPT_ERROR);
+        }
+    }
+
+    // waits for 10 packets from the connected TCP client
+    while (lLoopCount < g_ulPacketCount)
+    {
+        iStatus = sl_Recv(iNewSockID, g_cBsdBuf, iTestBufLen, 0);
+        if( iStatus <= 0 )
+        {
+          // error
+          sl_Close(iNewSockID);
+          sl_Close(iSockID);
+          ASSERT_ON_ERROR(RECV_ERROR);
+        }
+
+        UART_PRINT(g_cBsdBuf);
+
+        lLoopCount++;
+    }
+
+    Report("Recieved %u packets successfully\n\r",g_ulPacketCount);
+
+    // close the connected socket after receiving from connected TCP client
+    iStatus = sl_Close(iNewSockID);
+    ASSERT_ON_ERROR(iStatus);
+    // close the listening socket
+    iStatus = sl_Close(iSockID);
+    ASSERT_ON_ERROR(iStatus);
+
+    return SUCCESS;
+}
+
+
 //*****************************************************************************
 //
 //! Network Task
@@ -1187,13 +1351,28 @@ void Network( void *pvParameters )
 		LOOP_FOREVER();
 	}
 
+    char * temp = "asdasdsa\n\r";
+    UART_PRINT(temp);
 
     SendUDPNotify();
     osi_Sleep(5000);
 
+    lRetVal = StopHttpServer();
+    if(lRetVal < 0)
+	{
+		UART_PRINT("ERROR: HTTP server stop failed\n\r");
+		ERR_PRINT(lRetVal);
+		LOOP_FOREVER();
+	}
+    osi_Sleep(1000);
 
 
-
+    lRetVal = BsdTcpServer(PORT_NUM);
+    if(lRetVal < 0)
+    {
+        UART_PRINT("ERROR: TCP server\n\r");
+        LOOP_FOREVER();
+    }
 
     lRetVal = ServerFileDownload();
 
