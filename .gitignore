@@ -105,3 +105,4 @@ local.properties
 wifi_audio_app/MultiCast/
 wifi_audio_app/UniCast/
 RemoteSystemsTempFiles/.project
+tcp_socket/

@@ -1034,89 +1034,52 @@ static long StartHttpServer(){
 }
 
 
-//*****************************************************************************
-//
-//! Network Task
-//!
-//! \param  pvParameters - Parameters to the task's entry function
-//!
-//! \return None
-//!
-//*****************************************************************************
-void Network( void *pvParameters )
-{
-    long lRetVal = -1;
-
-    
-    //Initialize Global Variable
-    InitializeAppVariables();
-
-    //Connect to Network
-    lRetVal = ConnectToNetwork();
-    if(lRetVal < 0)
-    {
-        UART_PRINT("Failed to establish connection w/ an AP \n\r");
-        LOOP_FOREVER();
-    }    
-    
-    UART_PRINT("Connected to the AP: %s\r\n", SSID_NAME);
-
-    lRetVal = StartHttpServer();
-    if(lRetVal < 0)
-	{
-    	UART_PRINT("ERROR: HTTP server start failed\n\r");
-		ERR_PRINT(lRetVal);
-		LOOP_FOREVER();
-	}
-
-
-
-
+void SendUDPNotify(){
 	//////create UDP client socket for multicast
-    SlSockAddrIn_t  sAddr;
-    int             iSockID;
-    unsigned long   lLoopCount = 0;
-    int             iAddrSize;
-    int             iStatus;
+	SlSockAddrIn_t  sAddr;
+	int             iSockID;
+	unsigned long   lLoopCount = 0;
+	int             iAddrSize;
+	int             iStatus;
 
-    //filling the UDP server socket address
+	//filling the UDP server socket address
 	sAddr.sin_family = SL_AF_INET;
 	sAddr.sin_port = sl_Htons((unsigned short)1900);
 	sAddr.sin_addr.s_addr = sl_Htonl((unsigned int)0xEFFFFFFA);
 
-    iAddrSize = sizeof(SlSockAddrIn_t);
+	iAddrSize = sizeof(SlSockAddrIn_t);
 
-    // creating a UDP socket
-    iSockID = sl_Socket(SL_AF_INET,SL_SOCK_DGRAM, 0);
-    if( iSockID < 0 )
-    {
-        // error
-        //ASSERT_ON_ERROR(SOCKET_CREATE_ERROR);
-    	UART_PRINT("ERROR: UDP socket create failed\n\r");
-    	LOOP_FOREVER();
-    }
-
-    while(1){
-    // for a UDP connection connect is not required
-    // sending 10 packets to the UDP server
-    while (lLoopCount < 2)
-    {
+	// creating a UDP socket
+	iSockID = sl_Socket(SL_AF_INET,SL_SOCK_DGRAM, 0);
+	if( iSockID < 0 )
+	{
+		// error
+		//ASSERT_ON_ERROR(SOCKET_CREATE_ERROR);
+		UART_PRINT("ERROR: UDP socket create failed\n\r");
+		LOOP_FOREVER();
+	}
 
 
-        // sending packet
-        iStatus = sl_SendTo(iSockID, UDP_notify1, sizeof(UDP_notify1), 0,
-                                (SlSockAddr_t *)&sAddr, iAddrSize);
+	// for a UDP connection connect is not required
+	// sending 10 packets to the UDP server
+	while (lLoopCount < 2)
+	{
 
-        if( iStatus <= 0 )
-        {
-            // error
-            sl_Close(iSockID);
-            //ASSERT_ON_ERROR(UDP_CLIENT_FAILED);
-        	UART_PRINT("ERROR: UDP socket send failed\n\r");
-        	LOOP_FOREVER();
-        }
 
-        // sending packet
+		// sending packet
+		iStatus = sl_SendTo(iSockID, UDP_notify1, sizeof(UDP_notify1), 0,
+								(SlSockAddr_t *)&sAddr, iAddrSize);
+
+		if( iStatus <= 0 )
+		{
+			// error
+			sl_Close(iSockID);
+			//ASSERT_ON_ERROR(UDP_CLIENT_FAILED);
+			UART_PRINT("ERROR: UDP socket send failed\n\r");
+			LOOP_FOREVER();
+		}
+
+		// sending packet
 	   iStatus = sl_SendTo(iSockID, UDP_notify2, sizeof(UDP_notify2), 0,
 							   (SlSockAddr_t *)&sAddr, iAddrSize);
 
@@ -1180,15 +1143,56 @@ void Network( void *pvParameters )
 		UART_PRINT("ERROR: UDP socket send failed\n\r");
 		LOOP_FOREVER();
 	   }
-        UART_PRINT("UDP socket send %d\n\r", lLoopCount);
+		//UART_PRINT("UDP socket send %d\n\r", lLoopCount);
 
-        lLoopCount++;
-    }
-    UART_PRINT("UDP packets sent..\n\r");
+		lLoopCount++;
+	}
+	UART_PRINT("UDP packets sent..\n\r");
 
-    lLoopCount = 0;
-    osi_Sleep(15000);
+	lLoopCount = 0;
+}
+
+//*****************************************************************************
+//
+//! Network Task
+//!
+//! \param  pvParameters - Parameters to the task's entry function
+//!
+//! \return None
+//!
+//*****************************************************************************
+void Network( void *pvParameters )
+{
+    long lRetVal = -1;
+
+
+    //Initialize Global Variable
+    InitializeAppVariables();
+
+    //Connect to Network
+    lRetVal = ConnectToNetwork();
+    if(lRetVal < 0)
+    {
+        UART_PRINT("Failed to establish connection w/ an AP \n\r");
+        LOOP_FOREVER();
     }
+
+    UART_PRINT("Connected to the AP: %s\r\n", SSID_NAME);
+
+    lRetVal = StartHttpServer();
+    if(lRetVal < 0)
+	{
+    	UART_PRINT("ERROR: HTTP server start failed\n\r");
+		ERR_PRINT(lRetVal);
+		LOOP_FOREVER();
+	}
+
+
+    SendUDPNotify();
+    osi_Sleep(5000);
+
+
+
 
 
     lRetVal = ServerFileDownload();
