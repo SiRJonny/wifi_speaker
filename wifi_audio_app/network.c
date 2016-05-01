@@ -1186,6 +1186,28 @@ void SendUDPNotify(){
 	lLoopCount = 0;
 }
 
+void ParsePOST(char* buf, int len){
+	char * pos = buf;
+	char * start;
+	int cntr = 0;
+	while(cntr < len){
+		if(*pos == 'C'){
+			if(*(pos+10) == '>'){
+				start = pos + 10;
+				pos = start;
+				break;
+			}else{
+				pos++;
+				cntr++;
+			}
+		}else{
+			pos++;
+			cntr++;
+		}
+	}
+	UART_PRINT("%.*s\n\r",20,start);
+}
+
 //****************************************************************************
 //
 //! \brief Opening a TCP server side socket and receiving data
@@ -1298,7 +1320,9 @@ int BsdTcpServer(unsigned short usPort)
           ASSERT_ON_ERROR(RECV_ERROR);
         }
 
-        UART_PRINT(g_cBsdBuf);
+        //UART_PRINT(g_cBsdBuf);
+
+        ParsePOST(g_cBsdBuf,iStatus);
 
         lLoopCount++;
     }
@@ -1350,9 +1374,6 @@ void Network( void *pvParameters )
 		ERR_PRINT(lRetVal);
 		LOOP_FOREVER();
 	}
-
-    char * temp = "asdasdsa\n\r";
-    UART_PRINT(temp);
 
     SendUDPNotify();
     osi_Sleep(5000);
