@@ -74,8 +74,8 @@
 
 #define CC3200_MDNS_NAME  "CC3200._audio._udp.local"
 
-#define PREFIX_BUFFER           "/441khz.wav"		//"/bye.wav"		//"/meee.wav" 		//"/graphics/folders/partimages/CC3200.jpg"
-#define HOST_NAME               "csmcs.uw.hu"		//"www.ti.com"
+//#define PREFIX_BUFFER           "/441khz.wav"		//"/bye.wav"		//"/meee.wav" 		//"/graphics/folders/partimages/CC3200.jpg"
+//#define HOST_NAME               "csmcs.uw.hu"		//"www.ti.com"
 #define HOST_PORT               (80)
 
 #define SIZE_40K                40960  /* Serial flash file size 40 KB */
@@ -167,6 +167,9 @@ char UDP_notify6[] = "NOTIFY * HTTP/1.1\nHOST: 239.255.255.250:1900\nCACHE-CONTR
 // tcp socket:
 char g_cBsdBuf[BUF_SIZE];
 
+
+char PREFIX_BUFFER[200] = "/441khz.wav";
+char HOST_NAME[25] = "csmcs.uw.hu";
 
 //*****************************************************************************
 //                 GLOBAL VARIABLES -- End
@@ -993,7 +996,7 @@ static long ServerFileDownload()
 
 	    // Set up the input parameters for HTTP Connection
 	    addr.sin_family = AF_INET;
-	    addr.sin_port = htons(HOST_PORT);
+	    addr.sin_port = htons(5001);
 	    addr.sin_addr.s_addr = sl_Htonl(g_ulDestinationIP);
 
 	    // Testing HTTPCli open call: handle, address params only
@@ -1186,15 +1189,17 @@ void SendUDPNotify(){
 	lLoopCount = 0;
 }
 
-void ParsePOST(char* buf, int len){
+// POST üzenetbõl az elérési cím kikeresése
+int ParsePOST(char* buf, int len){
 	char * pos = buf;
 	char * start;
 	int cntr = 0;
-	while(cntr < len){
+	while(cntr < len){		// <CurrentURI> tag keresése
 		if(*pos == 'C'){
 			if(*(pos+10) == '>'){
-				start = pos + 10;
+				start = pos + 18;		// http:// -t levágjuk
 				pos = start;
+				cntr += 11;
 				break;
 			}else{
 				pos++;
@@ -1205,7 +1210,45 @@ void ParsePOST(char* buf, int len){
 			cntr++;
 		}
 	}
-	UART_PRINT("%.*s\n\r",20,start);
+
+	while(cntr < len){	// host name
+		pos++;
+		cntr++;
+		if(*pos == ':'){
+			memset(HOST_NAME, '\0', sizeof(HOST_NAME));
+			strncpy(HOST_NAME,start,pos-start);
+			break;
+		}
+	}
+
+	while(cntr < len){	// rest of url
+		pos++;
+		cntr++;
+		if(*pos == '/'){
+			start = pos;
+			break;
+		}
+	}
+
+	while(cntr < len){	// end of url
+		pos++;
+		cntr++;
+		if(*pos == '<'){
+			memset(PREFIX_BUFFER, '\0', sizeof(PREFIX_BUFFER));
+			strncpy(PREFIX_BUFFER,start,pos-start);
+			break;
+		}
+	}
+
+	if(cntr >= (len-10)){
+		return -1;
+	}else{
+		UART_PRINT("%s\n\r",HOST_NAME);
+		UART_PRINT("%s\n\r",PREFIX_BUFFER);
+		return 1;
+	}
+
+
 }
 
 //****************************************************************************
@@ -1322,7 +1365,10 @@ int BsdTcpServer(unsigned short usPort)
 
         //UART_PRINT(g_cBsdBuf);
 
-        ParsePOST(g_cBsdBuf,iStatus);
+        iStatus = ParsePOST(g_cBsdBuf,iStatus);
+        if(iStatus == 1){
+        	break;
+        }
 
         lLoopCount++;
     }
