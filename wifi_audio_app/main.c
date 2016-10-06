@@ -271,7 +271,6 @@ int main()
     //
     InitTerm();
 
-
     //
     // Initialising the I2C Interface
     //    
