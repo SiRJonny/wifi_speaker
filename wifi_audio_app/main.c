@@ -93,7 +93,8 @@
 #include "pinmux.h"
 #include "network.h"
 #include "circ_buff.h"
-#include "control.h"
+#include "ActionTask.h"
+//#include "control.h"
 #include "audioCodec.h"
 #include "i2s_if.h"
 #include "pcm_handler.h"
@@ -112,6 +113,7 @@ tUDPSocket g_UdpSock;
 OsiTaskHandle g_SpeakerTask = NULL ;
 OsiTaskHandle g_MicTask = NULL ;
 OsiTaskHandle g_NetworkTask = NULL ;
+OsiTaskHandle g_ActionTask = NULL ;
 
 unsigned char g_loopback=1;
 
@@ -140,6 +142,7 @@ extern unsigned long Token = 0;
 extern void Speaker( void *pvParameters );
 extern void Microphone( void *pvParameters );
 extern void Network( void *pvParameters );
+extern void ActionTask( void *pvParameters );
 
 //*****************************************************************************
 //
@@ -281,6 +284,21 @@ int main()
         LOOP_FOREVER();
     }
 
+    ///////////// I2C test
+    unsigned char value;
+    int J;
+    unsigned char ucData[2];
+    ucData[0] = (unsigned char)14;
+    ucData[1] = 1;
+
+		J=I2C_IF_ReadFrom(((0x30 >> 1)), &ucData[0], 1,&value,1);
+		if(J !=0)
+		{
+		   UART_PRINT("I2C ERROR\n\r");
+		}else{
+			UART_PRINT("___addr: %d, value: %d\n\r",ucData[0], value);
+		}
+
     RecordPlay = I2S_MODE_RX_TX;
 
 	pPlayBuffer = CreateCircularBuffer(PLAY_BUFFER_SIZE);
@@ -304,16 +322,16 @@ int main()
     AudioCodecMicVolCtrl(AUDIO_CODEC_TI_3254, AUDIO_CODEC_SPEAKER_ALL, 50);
 
 
-    GPIO_IF_LedConfigure(LED2|LED3);
+    GPIO_IF_LedConfigure(LED1|LED2|LED3);
 
-    GPIO_IF_LedOff(MCU_RED_LED_GPIO);
-    GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);    
+   /* GPIO_IF_LedOff(MCU_RED_LED_GPIO);
+    GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);  */
 
 
 
     //Turning off Green,Orange LED after i2c writes completed - First Time
-    GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
-    GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);
+  /*  GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);
+    GPIO_IF_LedOff(MCU_ORANGE_LED_GPIO);*/
 
     //
     // Initialize the Audio(I2S) Module
@@ -372,14 +390,26 @@ int main()
     }
 
     //
+	// Start the ActionTask
+	//
+	lRetVal = osi_TaskCreate( ActionTask, (signed char*)"ActionTask",\
+							   OSI_STACK_SIZE, NULL,
+							   1, &g_ActionTask );
+	if(lRetVal < 0)
+	{
+		ERR_PRINT(lRetVal);
+		LOOP_FOREVER();
+	}
+
+    //
     // Start the Control Task
     //     
-    lRetVal = ControlTaskCreate();
+    /*lRetVal = ControlTaskCreate();
     if(lRetVal < 0)
     {
         ERR_PRINT(lRetVal);
         LOOP_FOREVER();
-    }    
+    }*/
 
     //
     // Start the Microphone Task

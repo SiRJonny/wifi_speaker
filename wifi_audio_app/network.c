@@ -1190,7 +1190,7 @@ void SendUDPNotify(){
 }
 
 // POST üzenetbõl az elérési cím kikeresése
-int ParsePOST(char* buf, int len){
+/*int ParsePOST(char* buf, int len){
 	char * pos = buf;
 	char * start;
 	int cntr = 0;
@@ -1249,7 +1249,7 @@ int ParsePOST(char* buf, int len){
 	}
 
 
-}
+}*/
 
 //****************************************************************************
 //
@@ -1268,7 +1268,7 @@ int ParsePOST(char* buf, int len){
 //!                     one is established
 //
 //****************************************************************************
-int BsdTcpServer(unsigned short usPort)
+/*int BsdTcpServer(unsigned short usPort)
 {
     SlSockAddrIn_t  sAddr;
     SlSockAddrIn_t  sLocalAddr;
@@ -1364,8 +1364,9 @@ int BsdTcpServer(unsigned short usPort)
         }
 
         //UART_PRINT(g_cBsdBuf);
-
+        //UART_PRINT("ParsePOST: %s\r\n", g_cBsdBuf);
         iStatus = ParsePOST(g_cBsdBuf,iStatus);
+
         if(iStatus == 1){
         	break;
         }
@@ -1383,7 +1384,7 @@ int BsdTcpServer(unsigned short usPort)
     ASSERT_ON_ERROR(iStatus);
 
     return SUCCESS;
-}
+}*/
 
 
 //*****************************************************************************
@@ -1424,22 +1425,23 @@ void Network( void *pvParameters )
     SendUDPNotify();
     osi_Sleep(5000);
 
-    lRetVal = StopHttpServer();
+    /*lRetVal = StopHttpServer();
     if(lRetVal < 0)
 	{
 		UART_PRINT("ERROR: HTTP server stop failed\n\r");
 		ERR_PRINT(lRetVal);
 		LOOP_FOREVER();
-	}
-    osi_Sleep(1000);
+	}*/
+    osi_Sleep(30000);
 
 
-    lRetVal = BsdTcpServer(PORT_NUM);
+    //lRetVal = BsdTcpServer(PORT_NUM);
+    /*lRetVal = BsdTcpServer(80);
     if(lRetVal < 0)
     {
         UART_PRINT("ERROR: TCP server\n\r");
         LOOP_FOREVER();
-    }
+    }*/
 
     lRetVal = ServerFileDownload();
 
