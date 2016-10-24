@@ -274,30 +274,41 @@ int main()
     //
     InitTerm();
 
+    // codec nReset -> 1
+    GPIOPinWrite(GPIOA0_BASE,0x80,0x80);
+
     //
     // Initialising the I2C Interface
     //    
-    lRetVal = I2C_IF_Open(1);
+    lRetVal = I2C_IF_Open(I2C_MASTER_MODE_STD);
     if(lRetVal < 0)
     {
-        ERR_PRINT(lRetVal);
+    	UART_PRINT("I2C OPEN ERROR %d\n\r",lRetVal);
+        //ERR_PRINT(lRetVal);
         LOOP_FOREVER();
     }
 
+
+
     ///////////// I2C test
-    unsigned char value;
+    unsigned char value = 177;
     int J;
     unsigned char ucData[2];
     ucData[0] = (unsigned char)14;
     ucData[1] = 1;
 
+    int i;
+    for(i=0; i<1; i++)
+    {
 		J=I2C_IF_ReadFrom(((0x30 >> 1)), &ucData[0], 1,&value,1);
 		if(J !=0)
 		{
-		   UART_PRINT("I2C ERROR\n\r");
+		   UART_PRINT("I2C ERROR %d\n\r",J);
 		}else{
 			UART_PRINT("___addr: %d, value: %d\n\r",ucData[0], value);
 		}
+    }
+
 
     RecordPlay = I2S_MODE_RX_TX;
 

@@ -62,6 +62,7 @@ PinMuxConfig(void)
     MAP_PRCMPeripheralClkEnable(PRCM_I2S, PRCM_RUN_MODE_CLK);
     MAP_PRCMPeripheralClkEnable(PRCM_UARTA0, PRCM_RUN_MODE_CLK);
     MAP_PRCMPeripheralClkEnable(PRCM_I2CA0, PRCM_RUN_MODE_CLK);
+    MAP_PRCMPeripheralClkEnable(PRCM_GPIOA0, PRCM_RUN_MODE_CLK);
     MAP_PRCMPeripheralClkEnable(PRCM_GPIOA1, PRCM_RUN_MODE_CLK);
     MAP_PRCMPeripheralClkEnable(PRCM_GPIOA2, PRCM_RUN_MODE_CLK);
 
@@ -116,4 +117,10 @@ PinMuxConfig(void)
     // Configure PIN_53 for MCASP0 McACLK
     //
     MAP_PinTypeI2S(PIN_53, PIN_MODE_2);
+
+
+    ///// PIN_62 -> codec_nRESET
+    MAP_PinTypeGPIO(PIN_62, PIN_MODE_0, false);
+    MAP_GPIODirModeSet(GPIOA0_BASE, 0x80, GPIO_DIR_MODE_OUT);
+
 }
