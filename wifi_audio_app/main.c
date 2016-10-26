@@ -261,7 +261,8 @@ int main()
     //
     InitTerm();
 
-
+    // codec nReset -> 1
+        GPIOPinWrite(GPIOA0_BASE,0x80,0x80);
     //
     // Initialising the I2C Interface
     //    
@@ -399,12 +400,12 @@ int main()
     //
     // Start the Control Task
     //     
-    lRetVal = ControlTaskCreate();
+    /*lRetVal = ControlTaskCreate();
     if(lRetVal < 0)
     {
         ERR_PRINT(lRetVal);
         LOOP_FOREVER();
-    }    
+    }    */
 
     //
     // Start the Microphone Task
