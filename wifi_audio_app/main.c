@@ -298,8 +298,9 @@ int main()
     ucData[1] = 1;
 
     int i;
-    for(i=0; i<1; i++)
+    for(i=0; i<10; i++)
     {
+
 		J=I2C_IF_ReadFrom(((0x30 >> 1)), &ucData[0], 1,&value,1);
 		if(J !=0)
 		{
@@ -307,6 +308,7 @@ int main()
 		}else{
 			UART_PRINT("___addr: %d, value: %d\n\r",ucData[0], value);
 		}
+		ucData[0]++;
     }
 
 
