@@ -294,11 +294,11 @@ int main()
     unsigned char value = 177;
     int J;
     unsigned char ucData[2];
-    ucData[0] = (unsigned char)14;
+    ucData[0] = (unsigned char)15;
     ucData[1] = 1;
 
     int i;
-    for(i=0; i<10; i++)
+    for(i=0; i<1; i++)
     {
 
 		J=I2C_IF_ReadFrom(((0x30 >> 1)), &ucData[0], 1,&value,1);

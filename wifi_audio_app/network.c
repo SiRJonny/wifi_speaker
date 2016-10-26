@@ -171,6 +171,10 @@ char g_cBsdBuf[BUF_SIZE];
 char PREFIX_BUFFER[200] = "/441khz.wav";
 char HOST_NAME[25] = "csmcs.uw.hu";
 
+extern char PREFIX_BUFFER2[200];
+extern char HOST_NAME2[25];
+
+
 //*****************************************************************************
 //                 GLOBAL VARIABLES -- End
 //*****************************************************************************
@@ -1425,14 +1429,15 @@ void Network( void *pvParameters )
     SendUDPNotify();
     osi_Sleep(5000);
 
-    /*lRetVal = StopHttpServer();
+    lRetVal = StopHttpServer();
     if(lRetVal < 0)
 	{
 		UART_PRINT("ERROR: HTTP server stop failed\n\r");
 		ERR_PRINT(lRetVal);
 		LOOP_FOREVER();
-	}*/
-    osi_Sleep(30000);
+	}
+
+    //osi_Sleep(30000);
 
 
     //lRetVal = BsdTcpServer(PORT_NUM);
@@ -1443,6 +1448,7 @@ void Network( void *pvParameters )
         LOOP_FOREVER();
     }*/
 
+    Report("starting download...\n");
     lRetVal = ServerFileDownload();
 
     if(lRetVal < 0)
