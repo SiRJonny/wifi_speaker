@@ -325,14 +325,15 @@ int main()
 
     //
     // Configure Audio Codec
-    //     
-    AudioCodecReset(AUDIO_CODEC_TI_3254, NULL);
-    AudioCodecConfig(AUDIO_CODEC_TI_3254, AUDIO_CODEC_16_BIT, 16000,
+    //
+
+    AudioCodecReset(AUDIO_CODEC_TI_3104, NULL);
+    AudioCodecConfig(AUDIO_CODEC_TI_3104, AUDIO_CODEC_16_BIT, 16000,
                       AUDIO_CODEC_STEREO, AUDIO_CODEC_SPEAKER_ALL,
                       AUDIO_CODEC_MIC_ALL);
 
-    AudioCodecSpeakerVolCtrl(AUDIO_CODEC_TI_3254, AUDIO_CODEC_SPEAKER_ALL, 50);
-    AudioCodecMicVolCtrl(AUDIO_CODEC_TI_3254, AUDIO_CODEC_SPEAKER_ALL, 50);
+    //AudioCodecSpeakerVolCtrl(AUDIO_CODEC_TI_3104, AUDIO_CODEC_SPEAKER_ALL, 50);
+    //AudioCodecMicVolCtrl(AUDIO_CODEC_TI_3104, AUDIO_CODEC_SPEAKER_ALL, 50);
 
 
     GPIO_IF_LedConfigure(LED1|LED2|LED3);

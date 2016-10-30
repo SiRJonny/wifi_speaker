@@ -53,6 +53,7 @@ extern "C"
 // Define 8-bit codec id to identify codec device
 #define AUDIO_CODEC_TI_3254		0
 #define AUDIO_CODEC_TI_3110		1
+#define AUDIO_CODEC_TI_3104		2
 
 
 // Bits per sample Macro
