@@ -90,6 +90,11 @@ int AudioCodecReset(unsigned char codecId, void *arg)
         //
         AudioCodecRegWrite(TI3254_SW_RESET_REG, 0x01);
     }
+    else if (codecId == AUDIO_CODEC_TI_3104)
+	{
+		AudioCodecPageSelect(0x00);
+		AudioCodecRegWrite(0x01, 0x80);		//reset
+	}
 
     return 0;
 }
@@ -117,7 +122,38 @@ int AudioCodecConfig(unsigned char codecId, unsigned char bitsPerSample, unsigne
 {
     unsigned int	bitClk = 0;
 
-    if(codecId == AUDIO_CODEC_TI_3254)
+    if(codecId == AUDIO_CODEC_TI_3104)
+	{
+
+		AudioCodecPageSelect(0x00);			// page 0
+		AudioCodecRegWrite(0x08, 0x00);		// BCLK slave, WCLK slave
+		AudioCodecRegWrite(0x09, 0x00);		// I2S, 16bit
+
+		AudioCodecRegWrite((unsigned char)3, 0x91);	// PLL enable, P=1
+		AudioCodecRegWrite((unsigned char)4, 0x80);	// J=32
+		AudioCodecRegWrite((unsigned char)11, 0x08);	// R=8
+
+		AudioCodecRegWrite(0x07, 0x8A);		// codec data-path setup 44,1khz, left-right DAC-s enabled
+		//AudioCodecRegWrite(0x0A, 0x0F);		// data offset (bitclock)
+		//AudioCodecRegWrite((unsigned char)14, 0x80);		// ac coupled driver
+
+		//AudioCodecRegWrite((unsigned char)101, 0x01);		// clock clkdiv_out
+
+
+
+		//AudioCodecRegWrite((unsigned char)37, 0xC0);		// left-right DAC powerup
+		AudioCodecRegWrite((unsigned char)37, 0xE0);		// left-right DAC powerup
+		AudioCodecRegWrite((unsigned char)38, 0x10);		// left-right DAC powerup
+
+		AudioCodecRegWrite((unsigned char)41, 0xA0);		// DAC outs -> high power out (DAC_L2 / DAC_R2)
+		AudioCodecRegWrite((unsigned char)43, 0x00);		// left volume 50%
+		AudioCodecRegWrite((unsigned char)44, 0x00);		// right volume 50%
+
+		AudioCodecRegWrite((unsigned char)51, 0x0F);		// HPLOUT power up
+		AudioCodecRegWrite((unsigned char)65, 0x0F);		// HPROUT power up
+	}
+
+    else if(codecId == AUDIO_CODEC_TI_3254)
     {
         AudioCodecPageSelect(TI3254_PAGE_0);
 

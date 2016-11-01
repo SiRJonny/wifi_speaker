@@ -261,19 +261,24 @@ int main()
     //
     InitTerm();
 
-    // codec nReset -> 1
+    // codec nReset sequence: 1->0->1
         GPIOPinWrite(GPIOA0_BASE,0x80,0x80);
+        MAP_UtilsDelay(3300000);
+        GPIOPinWrite(GPIOA0_BASE,0x80,0x0);
+        MAP_UtilsDelay(3300000);
+        GPIOPinWrite(GPIOA0_BASE,0x80,0x80);
+        MAP_UtilsDelay(3300000);
     //
     // Initialising the I2C Interface
     //    
-    lRetVal = I2C_IF_Open(1);
+    lRetVal = I2C_IF_Open(0);
     if(lRetVal < 0)
     {
         ERR_PRINT(lRetVal);
         LOOP_FOREVER();
     }
 
-    RecordPlay = I2S_MODE_RX_TX;
+    RecordPlay = I2S_MODE_TX;
     g_loopback = 1;
 
 
@@ -302,16 +307,44 @@ int main()
     }
 
 
+
+
     //
     // Configure Audio Codec
     //     
-    AudioCodecReset(AUDIO_CODEC_TI_3254, NULL);
-    AudioCodecConfig(AUDIO_CODEC_TI_3254, AUDIO_CODEC_16_BIT, 16000,
+   AudioCodecReset(AUDIO_CODEC_TI_3104, NULL);
+    //MAP_UtilsDelay(3300000);
+    AudioCodecConfig(AUDIO_CODEC_TI_3104, AUDIO_CODEC_16_BIT, 16000,
                       AUDIO_CODEC_STEREO, AUDIO_CODEC_SPEAKER_ALL,
                       AUDIO_CODEC_MIC_ALL);
 
-    AudioCodecSpeakerVolCtrl(AUDIO_CODEC_TI_3254, AUDIO_CODEC_SPEAKER_ALL, 50);
-    AudioCodecMicVolCtrl(AUDIO_CODEC_TI_3254, AUDIO_CODEC_SPEAKER_ALL, 50);
+    //AudioCodecSpeakerVolCtrl(AUDIO_CODEC_TI_3254, AUDIO_CODEC_SPEAKER_ALL, 50);
+    //AudioCodecMicVolCtrl(AUDIO_CODEC_TI_3254, AUDIO_CODEC_SPEAKER_ALL, 50);
+
+    Report("wait...");
+    MAP_UtilsDelay(3300000);
+
+    ///////////// I2C test
+	unsigned char value = 222;
+	int J;
+	unsigned char ucData[2];
+	ucData[0] = (unsigned char)96;
+	ucData[1] = 1;
+
+	int i;
+	for(i=0; i<1; i++)
+	{
+
+		J=I2C_IF_ReadFrom(((0x30 >> 1)), &ucData[0], 1,&value,1);
+		if(J !=0)
+		{
+		   UART_PRINT("I2C ERROR %d\n\r",J);
+		   UART_PRINT("___addr: %d, value: %d\n\r",ucData[0], value);
+		}else{
+			UART_PRINT("___addr: %d, value: %d\n\r",ucData[0], value);
+		}
+		ucData[0]++;
+	}
 
 
     GPIO_IF_LedConfigure(LED2|LED3);
@@ -319,17 +352,7 @@ int main()
     GPIO_IF_LedOff(MCU_RED_LED_GPIO);
     GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);    
 
-    //
-    // Configure PIN_01 for GPIOOutput
-    //
-    //MAP_PinTypeGPIO(PIN_01, PIN_MODE_0, false);
-    // MAP_GPIODirModeSet(GPIOA1_BASE, 0x4, GPIO_DIR_MODE_OUT);
 
-    //
-    // Configure PIN_02 for GPIOOutput
-    //
-    //MAP_PinTypeGPIO(PIN_02, PIN_MODE_0, false);
-    // MAP_GPIODirModeSet(GPIOA1_BASE, 0x8, GPIO_DIR_MODE_OUT);
 
 
     //Turning off Green,Orange LED after i2c writes completed - First Time
@@ -377,7 +400,7 @@ int main()
     //
     // Start the simplelink thread
     //
-    lRetVal = VStartSimpleLinkSpawnTask(9);  
+    lRetVal = VStartSimpleLinkSpawnTask(9);
     if(lRetVal < 0)
     {
         ERR_PRINT(lRetVal);
