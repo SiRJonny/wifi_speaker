@@ -129,14 +129,21 @@ int AudioCodecConfig(unsigned char codecId, unsigned char bitsPerSample, unsigne
     	AudioCodecRegWrite(0x08, 0x00);		// BCLK slave, WCLK slave
     	AudioCodecRegWrite(0x09, 0x00);		// I2S, 16bit
 
+    	AudioCodecRegWrite((unsigned char)3, 0x91);	// PLL enable, P=1
+		AudioCodecRegWrite((unsigned char)4, 0x80);	// J=32
+		AudioCodecRegWrite((unsigned char)11, 0x08);	// R=8
+
     	AudioCodecRegWrite(0x07, 0x8A);		// codec data-path setup 44,1khz, left-right DAC-s enabled
     	AudioCodecRegWrite((unsigned char)37, 0xC0);		// left-right DAC powerup
     	AudioCodecRegWrite((unsigned char)41, 0xA0);		// DAC outs -> high power out (DAC_L2 / DAC_R2)
     	AudioCodecRegWrite((unsigned char)43, 0x80);		// left volume 50%
     	AudioCodecRegWrite((unsigned char)44, 0x80);		// right volume 50%
+
+    	AudioCodecRegWrite((unsigned char)51, 0x0F);		// HPLOUT power up
+		AudioCodecRegWrite((unsigned char)65, 0x0F);		// HPROUT power up
     }
 
-    if(codecId == AUDIO_CODEC_TI_3254)
+    else if(codecId == AUDIO_CODEC_TI_3254)
     {
         AudioCodecPageSelect(TI3254_PAGE_0);
 

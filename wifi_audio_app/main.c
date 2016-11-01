@@ -274,8 +274,13 @@ int main()
     //
     InitTerm();
 
-    // codec nReset -> 1
-    GPIOPinWrite(GPIOA0_BASE,0x80,0x80);
+    // codec nReset sequence: 1->0->1
+	GPIOPinWrite(GPIOA0_BASE,0x80,0x80);
+	MAP_UtilsDelay(3300000);
+	GPIOPinWrite(GPIOA0_BASE,0x80,0x0);
+	MAP_UtilsDelay(3300000);
+	GPIOPinWrite(GPIOA0_BASE,0x80,0x80);
+	MAP_UtilsDelay(3300000);
 
     //
     // Initialising the I2C Interface
@@ -312,7 +317,7 @@ int main()
     }
 
 
-    RecordPlay = I2S_MODE_RX_TX;
+    RecordPlay = I2S_MODE_TX;
 
 	pPlayBuffer = CreateCircularBuffer(PLAY_BUFFER_SIZE);
 	if(pPlayBuffer == NULL)
@@ -336,7 +341,7 @@ int main()
     //AudioCodecMicVolCtrl(AUDIO_CODEC_TI_3104, AUDIO_CODEC_SPEAKER_ALL, 50);
 
 
-    GPIO_IF_LedConfigure(LED1|LED2|LED3);
+    //GPIO_IF_LedConfigure(LED1|LED2|LED3);
 
    /* GPIO_IF_LedOff(MCU_RED_LED_GPIO);
     GPIO_IF_LedOff(MCU_GREEN_LED_GPIO);  */
