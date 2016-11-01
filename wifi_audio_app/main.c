@@ -273,7 +273,9 @@ int main()
     // Initialising the UART terminal
     //
     InitTerm();
+    Report("Board init done\n");
 
+    Report("resetting codec by gpio\n");
     // codec nReset sequence: 1->0->1
 	GPIOPinWrite(GPIOA0_BASE,0x80,0x80);
 	MAP_UtilsDelay(3300000);
@@ -296,7 +298,7 @@ int main()
 
 
     ///////////// I2C test
-    unsigned char value = 177;
+    /*unsigned char value = 177;
     int J;
     unsigned char ucData[2];
     ucData[0] = (unsigned char)15;
@@ -314,7 +316,7 @@ int main()
 			UART_PRINT("___addr: %d, value: %d\n\r",ucData[0], value);
 		}
 		ucData[0]++;
-    }
+    }*/
 
 
     RecordPlay = I2S_MODE_TX;

@@ -268,7 +268,7 @@ void ActionTask( void *pvParameters )
 {
 
 	while(1){
-		osi_Sleep(5000);
+		osi_Sleep(15000);
 		UART_PRINT("asdf...\n\r");
 		BsdTcpServer(801);
 

@@ -894,7 +894,7 @@ static int GetData(HTTPCli_Handle cli)
     }
 
     // Open file to save the downloaded file
-    lRetVal = sl_FsOpen((_u8 *)FILE_NAME, FS_MODE_OPEN_WRITE, &Token, &fileHandle);
+    /*lRetVal = sl_FsOpen((_u8 *)FILE_NAME, FS_MODE_OPEN_WRITE, &Token, &fileHandle);
     if(lRetVal < 0)
     {
         // File Doesn't exit create a new of 40 KB file
@@ -904,7 +904,7 @@ static int GetData(HTTPCli_Handle cli)
                            &Token, &fileHandle);
         ASSERT_ON_ERROR(lRetVal);
 
-    }
+    }*/
 
 
 
@@ -920,7 +920,7 @@ static int GetData(HTTPCli_Handle cli)
 			if(len < 0)
 			{
 				// Close file without saving
-				lRetVal = sl_FsClose(fileHandle, 0, (unsigned char*) "A", 1);
+				//lRetVal = sl_FsClose(fileHandle, 0, (unsigned char*) "A", 1);
 				return lRetVal;
 			}
 
@@ -978,8 +978,8 @@ static int GetData(HTTPCli_Handle cli)
 
     // Save and close file
     UART_PRINT("Total bytes received: %d\n\r", bytesReceived);
-    lRetVal = sl_FsClose(fileHandle, 0, 0, 0);
-    ASSERT_ON_ERROR(lRetVal);
+    //lRetVal = sl_FsClose(fileHandle, 0, 0, 0);
+    //ASSERT_ON_ERROR(lRetVal);
 
     return SUCCESS;
 }
@@ -1000,7 +1000,7 @@ static long ServerFileDownload()
 
 	    // Set up the input parameters for HTTP Connection
 	    addr.sin_family = AF_INET;
-	    addr.sin_port = htons(5001);
+	    addr.sin_port = htons(80);
 	    addr.sin_addr.s_addr = sl_Htonl(g_ulDestinationIP);
 
 	    // Testing HTTPCli open call: handle, address params only
