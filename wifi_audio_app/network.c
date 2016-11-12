@@ -76,7 +76,7 @@
 
 //#define PREFIX_BUFFER           "/441khz.wav"		//"/bye.wav"		//"/meee.wav" 		//"/graphics/folders/partimages/CC3200.jpg"
 //#define HOST_NAME               "csmcs.uw.hu"		//"www.ti.com"
-#define HOST_PORT               (80)
+
 
 #define SIZE_40K                40960  /* Serial flash file size 40 KB */
 
@@ -168,8 +168,9 @@ char UDP_notify6[] = "NOTIFY * HTTP/1.1\nHOST: 239.255.255.250:1900\nCACHE-CONTR
 char g_cBsdBuf[BUF_SIZE];
 
 
-char PREFIX_BUFFER[200] = "/441khz.wav";
-char HOST_NAME[25] = "csmcs.uw.hu";
+char PREFIX_BUFFER[200] = "/stream/swyh.wav";	//"/441khz.wav";
+char HOST_NAME[25] = "192.168.1.100";	//"csmcs.uw.hu";
+int HOST_PORT = 5544;
 
 extern char PREFIX_BUFFER2[200];
 extern char HOST_NAME2[25];
@@ -654,9 +655,12 @@ long ConnectToNetwork()
 	secParams.KeyLen = strlen(SECURITY_KEY);
 	secParams.Type = SECURITY_TYPE;
 
+	osi_Sleep(500);
     //Start Simplelink Device 
     lRetVal =  sl_Start(NULL,NULL,NULL);
     ASSERT_ON_ERROR(lRetVal);
+
+    osi_Sleep(300);
 
     if(lRetVal != ROLE_STA)
     {
@@ -878,7 +882,7 @@ static int GetData(HTTPCli_Handle cli)
         }
         else if(id == 1)
         {
-            if(!strncmp((const char *)g_buff, "chunked", sizeof("chunked")))
+            if(!strncmp((const char *)g_buff, "Chunked", sizeof("Chunked")))
             {
                 UART_PRINT("Chunked transfer encoding\n\r");
             }
@@ -953,7 +957,7 @@ static int GetData(HTTPCli_Handle cli)
 			bytesReceived +=len;
 
 			if(bytesReceived >= content_length){
-				break;
+				//break;
 			}
 
 			/*if ((len - 2) >= 0 && g_buff[len - 2] == '\r' && g_buff [len - 1] == '\n'){
@@ -1000,7 +1004,7 @@ static long ServerFileDownload()
 
 	    // Set up the input parameters for HTTP Connection
 	    addr.sin_family = AF_INET;
-	    addr.sin_port = htons(80);
+	    addr.sin_port = htons(5544);
 	    addr.sin_addr.s_addr = sl_Htonl(g_ulDestinationIP);
 
 	    // Testing HTTPCli open call: handle, address params only
@@ -1427,7 +1431,7 @@ void Network( void *pvParameters )
 	}
 
     SendUDPNotify();
-    osi_Sleep(5000);
+    osi_Sleep(3000);
 
     lRetVal = StopHttpServer();
     if(lRetVal < 0)

@@ -273,9 +273,9 @@ int main()
     // Initialising the UART terminal
     //
     InitTerm();
-    Report("Board init done\n");
+    Report("Board init done\n\r");
 
-    Report("resetting codec by gpio\n");
+    Report("resetting codec by gpio\n\r");
     // codec nReset sequence: 1->0->1
 	GPIOPinWrite(GPIOA0_BASE,0x80,0x80);
 	MAP_UtilsDelay(3300000);
@@ -333,9 +333,9 @@ int main()
     //
     // Configure Audio Codec
     //
-
-    AudioCodecReset(AUDIO_CODEC_TI_3104, NULL);
-    AudioCodecConfig(AUDIO_CODEC_TI_3104, AUDIO_CODEC_16_BIT, 16000,
+	UART_PRINT("Configuring Audio codec\n\r");
+    AudioCodecReset(AUDIO_CODEC_TI_3254, NULL);
+    AudioCodecConfig(AUDIO_CODEC_TI_3254, AUDIO_CODEC_16_BIT, 16000,
                       AUDIO_CODEC_STEREO, AUDIO_CODEC_SPEAKER_ALL,
                       AUDIO_CODEC_MIC_ALL);
 
@@ -387,6 +387,8 @@ int main()
     //     
     Audio_Start(RecordPlay);
 
+
+    UART_PRINT("Starting simplelink thread\n\r");
     //
     // Start the simplelink thread
     //
@@ -397,7 +399,7 @@ int main()
         LOOP_FOREVER();
     }
 
-
+    UART_PRINT("Starting network task\n\r");
     //
     // Start the Network Task
     //    
