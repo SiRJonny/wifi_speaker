@@ -58,7 +58,8 @@
 #include "circ_buff.h"
 
 // HTTP Client lib
-#include <http/client/httpcli.h>
+//#include <http/client/httpcli.h>
+#include "httpcli.h"
 #include <http/client/common.h>
 
 //*****************************************************************************
@@ -655,12 +656,14 @@ long ConnectToNetwork()
 	secParams.KeyLen = strlen(SECURITY_KEY);
 	secParams.Type = SECURITY_TYPE;
 
-	osi_Sleep(500);
+
+
+	//osi_Sleep(300);
     //Start Simplelink Device 
     lRetVal =  sl_Start(NULL,NULL,NULL);
     ASSERT_ON_ERROR(lRetVal);
 
-    osi_Sleep(300);
+    //osi_Sleep(1000);
 
     if(lRetVal != ROLE_STA)
     {
@@ -885,6 +888,7 @@ static int GetData(HTTPCli_Handle cli)
             if(!strncmp((const char *)g_buff, "Chunked", sizeof("Chunked")))
             {
                 UART_PRINT("Chunked transfer encoding\n\r");
+                //cli->state |= 0x04;
             }
         }
         else if(id == 2)
@@ -921,10 +925,11 @@ static int GetData(HTTPCli_Handle cli)
         if(iBufferFilled <= (66*PACKET_SIZE))
         {
         	len = HTTPCli_readResponseBody(cli, (char *)g_buff, sizeof(g_buff) - 1, &moreFlag);
-			if(len < 0)
+        	//len = HTTPCli_readRawResponseBody(cli, (char *)g_buff, sizeof(g_buff) - 1);
+        	if(len < 0)
 			{
 				// Close file without saving
-				//lRetVal = sl_FsClose(fileHandle, 0, (unsigned char*) "A", 1);
+
 				return lRetVal;
 			}
 
@@ -1004,7 +1009,7 @@ static long ServerFileDownload()
 
 	    // Set up the input parameters for HTTP Connection
 	    addr.sin_family = AF_INET;
-	    addr.sin_port = htons(5544);
+	    addr.sin_port = htons(HOST_PORT);
 	    addr.sin_addr.s_addr = sl_Htonl(g_ulDestinationIP);
 
 	    // Testing HTTPCli open call: handle, address params only
