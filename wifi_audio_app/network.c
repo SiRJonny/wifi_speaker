@@ -169,9 +169,9 @@ char UDP_notify6[] = "NOTIFY * HTTP/1.1\nHOST: 239.255.255.250:1900\nCACHE-CONTR
 char g_cBsdBuf[BUF_SIZE];
 
 
-char PREFIX_BUFFER[200] = "/stream/swyh.wav";	//"/441khz.wav";
-char HOST_NAME[25] = "192.168.1.100";	//"csmcs.uw.hu";
-int HOST_PORT = 5544;
+char PREFIX_BUFFER[200] = "/441khz.wav";  //"/stream/swyh.wav";	//"/441khz.wav";
+char HOST_NAME[25] = "csmcs.uw.hu";  //"192.168.1.100";	//"csmcs.uw.hu";
+int HOST_PORT = 80;
 
 extern char PREFIX_BUFFER2[200];
 extern char HOST_NAME2[25];
@@ -955,9 +955,9 @@ static int GetData(HTTPCli_Handle cli)
 				}
 			}
 			buffersize = GetBufferSize(pPlayBuffer);
-			if (buffersize < 10000){
+			//if (buffersize < 10000){
 				UART_PRINT("--%d\n\r",buffersize);
-			}
+			//}
 
 			bytesReceived +=len;
 
