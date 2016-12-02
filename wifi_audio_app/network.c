@@ -169,9 +169,9 @@ char UDP_notify6[] = "NOTIFY * HTTP/1.1\nHOST: 239.255.255.250:1900\nCACHE-CONTR
 char g_cBsdBuf[BUF_SIZE];
 
 
-char PREFIX_BUFFER[200] = "/441khz.wav";  //"/stream/swyh.wav";	//"/441khz.wav";
-char HOST_NAME[25] = "csmcs.uw.hu";  //"192.168.1.100";	//"csmcs.uw.hu";
-int HOST_PORT = 80;
+char PREFIX_BUFFER[200] = "/stream/swyh.wav";	//"/441khz.wav";
+char HOST_NAME[25] = "192.168.1.100";	//"csmcs.uw.hu";
+int HOST_PORT = 5544; //80;
 
 extern char PREFIX_BUFFER2[200];
 extern char HOST_NAME2[25];
@@ -947,6 +947,17 @@ static int GetData(HTTPCli_Handle cli)
 
 			if(len>0)
 			{
+				int i = 0;
+				unsigned * ptr;
+				int limit = 365;//sizeof(g_buff);
+
+				ptr = g_buff;
+				for(i=0; i < limit; i++)
+				{
+					*ptr =  ((*ptr & 0x00ff00ff) << 8) | ((*ptr & 0xff00ff00) >> 8);
+					ptr++;
+				}
+
 				iRetVal = FillBuffer(pPlayBuffer, (unsigned char*)g_buff, len);
 				if(iRetVal < 0)
 				{
@@ -1436,7 +1447,7 @@ void Network( void *pvParameters )
 	}
 
     SendUDPNotify();
-    osi_Sleep(3000);
+    //osi_Sleep(3000);
 
     lRetVal = StopHttpServer();
     if(lRetVal < 0)
